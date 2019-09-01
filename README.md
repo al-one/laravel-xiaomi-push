@@ -96,6 +96,7 @@ use Alone\LaravelXiaomiPush\XiaomiNotification;
 $msg = (new XiaomiNotification)
     ->title('通知标题')
     ->description('通知描述')
+    ->body('通知描述 For iOS')
     ->payload([
          'action' => 'openApp',
     ])
