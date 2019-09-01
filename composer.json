@@ -1,0 +1,32 @@
+{
+    "name": "al-one/laravel-xiaomi-push",
+    "description": "XiaoMi Push For Laravel Notifications",
+    "keywords": ["laravel", "illuminate", "notifications", "mipush", "xiaomi-push"],
+    "authors": [
+        {
+            "name": "Alone",
+            "email": "hi@anlo.ng"
+        }
+    ],
+    "require": {
+        "php": ">=5.6.4",
+        "illuminate/contracts": "~5.3",
+        "illuminate/support": "~5.3",
+        "illuminate/notifications": "~5.3",
+        "al-one/xmpush-php": "^2.2",
+        "jeremeamia/superclosure": "^2.3"
+    },
+    "autoload": {
+        "psr-4": {
+            "Alone\\LaravelXiaomiPush\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Alone\\LaravelXiaomiPush\\ServiceProvider"
+            ]
+        }
+    },
+    "license": "MIT"
+}

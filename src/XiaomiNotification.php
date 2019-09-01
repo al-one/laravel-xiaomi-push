@@ -1,0 +1,185 @@
+<?php
+
+namespace Alone\LaravelXiaomiPush;
+
+use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Notifications\Notification;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use SuperClosure\SerializableClosure;
+use xmpush;
+
+class XiaomiNotification extends Notification implements ShouldQueue
+{
+    use Queueable;
+
+    protected $message = [];
+
+    /**
+     * @var Notifiable
+     */
+    protected $notifiable;
+
+    protected $sendBy;
+
+    /**
+     * @var \Closure|SerializableClosure
+     */
+    protected $handler;
+
+    public function __construct($message = [])
+    {
+        $this->message = $message;
+    }
+
+    public function title($set = null)
+    {
+        return $this->getOrSet(__FUNCTION__,$set);
+    }
+
+    public function description($set = null)
+    {
+        return $this->getOrSet(__FUNCTION__,$set);
+    }
+
+    public function body($set = null)
+    {
+        return $this->getOrSet(__FUNCTION__,$set);
+    }
+
+    public function payload($set = null)
+    {
+        return $this->getOrSet(__FUNCTION__,$set);
+    }
+
+    protected function getOrSet($key,$val = null)
+    {
+        if(isset($val))
+        {
+            data_set($this->message,$key,$val);
+            return $this;
+        }
+        return data_get($this->message,$key);
+    }
+
+    /**
+     * 发送方式
+     * regid/alias/account
+     */
+    public function sendBy($set = null)
+    {
+        if(isset($set))
+        {
+            $this->sendBy = $set;
+            return $this;
+        }
+        return $this->sendBy;
+    }
+
+    /**
+     * 推送频道
+     */
+    public function via($notifiable)
+    {
+        $channels = [];
+        $this->notifiable = $notifiable;
+        if($notifiable->routeNotificationFor('xiaomiPush'))
+        {
+            $channels[] = 'xiaomi_push';
+        }
+        return $channels;
+    }
+
+    /**
+     * 小米推送
+     */
+    public function toXiaoMiPush($notifiable,$cfg = [])
+    {
+        $ios = false;
+        if(method_exists($notifiable,'isIosDevice'))
+        {
+            $ios = $notifiable->isIosDevice();
+        }
+        $dvc = $ios ? 'ios' : 'android';
+        if(method_exists($notifiable,'getAppPackage'))
+        {
+            $pkg = $notifiable->getAppPackage();
+        }
+        else
+        {
+            $pkg = data_get($notifiable,'app_package');
+        }
+        if(empty($pkg))
+        {
+            $pkg = data_get($cfg,"$dvc.bundle_id");
+        }
+        elseif(isset($cfg['bundles'][$pkg]))
+        {
+            // 支持多包名不同配置
+            $cfg = $cfg['bundles'][$pkg] ?: [];
+        }
+        xmpush\Constants::setPackage($pkg);// Builder 之前设置包名
+        xmpush\Constants::setSecret(data_get($cfg,"$dvc.secret"));
+        $payload = $this->payload();
+        if($ios)
+        {
+            if(data_get($cfg,"$dvc.sandbox"))
+            {
+                xmpush\Constants::useSandbox();
+            }
+            $msg = new xmpush\IOSBuilder();
+            if($this->body())
+            {
+                $msg->body($this->body());
+            }
+            if($payload)
+            {
+                $msg->extra('payload',json_encode($payload));
+            }
+        }
+        else
+        {
+            $msg = new xmpush\Builder();
+            $msg->passThrough(0);
+            if($payload)
+            {
+                $msg->payload(json_encode($payload));
+            }
+            $msg->extra(xmpush\Builder::notifyEffect,1/*打开APP*/);
+            $msg->extra(xmpush\Builder::notifyForeground,0);
+        }
+        foreach(['title','description'] as $fun)
+        {
+            $val = $this->$fun();
+            $val && $msg->$fun($val);
+        }
+        if(is_callable($this->handler))
+        {
+            $fun = $this->handler;
+            $fun($msg,$notifiable,$cfg,$ios);
+        }
+        $msg->build();
+        \Log::debug("xiaomi push msg $dvc",[$msg->getFields(),$msg->getJSONInfos()]);
+        return $msg;
+    }
+
+    /**
+     * 处理消息格式
+     */
+    public function setHandler(\Closure $fun)
+    {
+        $this->handler = new SerializableClosure($fun);
+        return $this;
+    }
+
+    public function toMsg($notifiable = null)
+    {
+        return $this->message;
+    }
+
+    public function toArray($notifiable = null)
+    {
+        return $this->message;
+    }
+
+}
