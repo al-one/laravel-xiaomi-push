@@ -15,6 +15,8 @@ class XiaomiNotification extends Notification implements ShouldQueue
 
     protected $message = [];
 
+    protected $channels = ['xiaomi_push'];
+
     /**
      * @var Notifiable
      */
@@ -45,6 +47,17 @@ class XiaomiNotification extends Notification implements ShouldQueue
     public function body($set = null)
     {
         return $this->getOrSet(__FUNCTION__,$set);
+    }
+
+    public function content($set = null)
+    {
+        if(isset($set))
+        {
+            $this->body($set);
+            $this->description($set);
+            return $this;
+        }
+        return $this->body() ?: $this->description();
     }
 
     public function payload($set = null)
@@ -81,13 +94,33 @@ class XiaomiNotification extends Notification implements ShouldQueue
      */
     public function via($notifiable)
     {
-        $channels = [];
         $this->notifiable = $notifiable;
-        if($notifiable->routeNotificationFor('xiaomiPush'))
+        if(is_object($notifiable))
         {
-            $channels[] = 'xiaomi_push';
+            if($notifiable->routeNotificationFor('xiaomiPush'))
+            {
+                $this->channels('xiaomi_push');
+            }
         }
-        return $channels;
+        return $this->channels();
+    }
+
+    public function channels($set = null)
+    {
+        if(isset($set))
+        {
+            if(is_array($set))
+            {
+                $this->channels = $set;
+            }
+            else
+            {
+                $this->channels[] = $set;
+            }
+            $this->channels = array_unique($this->channels);
+            return $this;
+        }
+        return $this->channels;
     }
 
     /**
@@ -119,6 +152,7 @@ class XiaomiNotification extends Notification implements ShouldQueue
             $cfg = $cfg['bundles'][$pkg] ?: [];
         }
         xmpush\Constants::setPackage($pkg);// Builder 之前设置包名
+        xmpush\Constants::setBundleId($pkg);
         xmpush\Constants::setSecret(data_get($cfg,"$dvc.secret"));
         $payload = $this->payload();
         if($ios)
@@ -145,7 +179,7 @@ class XiaomiNotification extends Notification implements ShouldQueue
             {
                 $msg->payload(json_encode($payload));
             }
-            $msg->extra(xmpush\Builder::notifyEffect,1/*打开APP*/);
+            //$msg->extra(xmpush\Builder::notifyEffect,1/*打开APP*/);
             $msg->extra(xmpush\Builder::notifyForeground,0);
         }
         foreach(['title','description'] as $fun)

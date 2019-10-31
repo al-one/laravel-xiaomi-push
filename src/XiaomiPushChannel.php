@@ -55,8 +55,10 @@ class XiaomiPushChannel
         $raw = $ret->getRaw();
         if($eno = $ret->getErrorCode())
         {
-            $cfg = $this->config;
-            \Log::error("xiaomi push error \t",compact('eno','raw','cfg'));
+            $dvc = $msg instanceof xmpush\IOSBuilder ? 'ios' : 'android';
+            $pkg = xmpush\Constants::$packageName;
+            $cfg = data_get($this->config,"$dvc.$pkg") ?: data_get($this->config,$dvc) ?: $this->config;
+            \Log::warning("xiaomi push error \t",compact('eno','sto','dvc','pkg','raw','cfg'));
         }
         else
         {
