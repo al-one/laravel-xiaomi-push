@@ -10,9 +10,9 @@
     ],
     "require": {
         "php": ">=5.6.4",
-        "illuminate/contracts": "~5.3",
-        "illuminate/support": "~5.3",
-        "illuminate/notifications": "~5.3",
+        "illuminate/contracts": "^5.3 || ^6.0",
+        "illuminate/support": "^5.3 || ^6.0",
+        "illuminate/notifications": "^5.3 || ^6.0",
         "al-one/xmpush-php": "^2.2",
         "jeremeamia/superclosure": "^2.3"
     },
