@@ -2,6 +2,7 @@
 
 namespace Alone\LaravelXiaomiPush;
 
+use Illuminate\Support;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Notifications\Notification;
@@ -123,6 +124,28 @@ class XiaomiNotification extends Notification implements ShouldQueue
         return $this->channels;
     }
 
+    public function getConfig($dvc = null,$pkg = null,$config = [])
+    {
+        $cfg = $config ?: [];
+        if(!empty($dvc) && isset($cfg[$dvc]))
+        {
+            $cfg = ($cfg[$dvc] ?: []) + $cfg;
+        }
+        if(!empty($pkg))
+        {
+            // 多包名不同配置
+            if(isset($cfg['bundles'][$pkg]))
+            {
+                $cfg = ($cfg['bundles'][$pkg] ?: []) + $cfg;
+            }
+            elseif(isset($config['bundles'][$pkg]))
+            {
+                $cfg = ($config['bundles'][$pkg] ?: []) + $cfg;
+            }
+        }
+        return Support\Arr::except($cfg,['android','ios','bundles']);
+    }
+
     /**
      * 小米推送
      */
@@ -142,22 +165,18 @@ class XiaomiNotification extends Notification implements ShouldQueue
         {
             $pkg = data_get($notifiable,'app_package');
         }
+        $cfg = $this->getConfig($dvc,$pkg,$cfg);
         if(empty($pkg))
         {
-            $pkg = data_get($cfg,"$dvc.bundle_id");
-        }
-        elseif(isset($cfg['bundles'][$pkg]))
-        {
-            // 支持多包名不同配置
-            $cfg = $cfg['bundles'][$pkg] ?: [];
+            $pkg = data_get($cfg,'bundle_id');
         }
         xmpush\Constants::setPackage($pkg);// Builder 之前设置包名
         xmpush\Constants::setBundleId($pkg);
-        xmpush\Constants::setSecret(data_get($cfg,"$dvc.secret"));
+        xmpush\Constants::setSecret(data_get($cfg,'secret'));
         $payload = $this->payload();
         if($ios)
         {
-            if(data_get($cfg,"$dvc.sandbox"))
+            if(data_get($cfg,'sandbox'))
             {
                 xmpush\Constants::useSandbox();
             }
