@@ -3,6 +3,7 @@
 namespace Alone\LaravelXiaomiPush;
 
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Facades;
 use xmpush;
 
 class XiaomiPushChannel
@@ -53,16 +54,17 @@ class XiaomiPushChannel
             $ret = $sender->sendToUserAccounts($msg,(array)$sto);
         }
         $raw = $ret->getRaw();
+        $dvc = $msg instanceof xmpush\IOSBuilder ? 'ios' : 'android';
+        $pkg = xmpush\Constants::$packageName;
         if($eno = $ret->getErrorCode())
         {
-            $dvc = $msg instanceof xmpush\IOSBuilder ? 'ios' : 'android';
-            $pkg = xmpush\Constants::$packageName;
             $cfg = $notification->getConfig($dvc,$pkg,$this->config);
-            \Log::warning("xiaomi push error \t",compact('eno','sto','dvc','pkg','raw','cfg'));
+            Facades\Log::warning("xiaomi push error \t",compact('eno','sto','dvc','pkg','raw','cfg'));
         }
         else
         {
-            \Log::debug("xiaomi push success \t",[compact('msg','notifiable','raw')]);
+            $dat = $msg->getFields();
+            Facades\Log::debug("xiaomi push success \t",compact('dat','sto','dvc','pkg','raw'));
         }
         return $ret;
     }
