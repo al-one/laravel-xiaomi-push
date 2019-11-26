@@ -48,7 +48,7 @@ class NotifiableGroup
             $nls = (array)data_get($v,'list');
             foreach(isset($chunk) ? array_chunk($nls,$chunk) : [$nls] as $l)
             {
-                $gls[] = new self($l,data_get($v,'package'),data_get($v,'is_ios'));
+                $gls[] = new static($l,data_get($v,'package'),data_get($v,'is_ios'));
             }
             return $gls;
         },[]);
@@ -70,7 +70,11 @@ class NotifiableGroup
         {
             if(is_object($notifiable) && method_exists($notifiable,'routeNotificationFor'))
             {
-                $lst[] = $notifiable->routeNotificationFor('xiaomiPush');
+                $sto = $notifiable->routeNotificationFor('xiaomiPush');
+                if($sto)
+                {
+                    $lst[] = $sto;
+                }
             }
             return $lst;
         },[]);
