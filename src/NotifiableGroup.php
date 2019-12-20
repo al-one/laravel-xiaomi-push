@@ -11,7 +11,7 @@ class NotifiableGroup
     use Notifiable;
 
     public $items;
-    public $appPackage;
+    public $app_package;
     public $isIosDevice;
 
     public $sendTos = [];
@@ -19,7 +19,7 @@ class NotifiableGroup
     public function __construct($items,$appPackage,$isIosDevice)
     {
         $this->items = new Collection($items);
-        $this->appPackage  = $appPackage;
+        $this->app_package = $appPackage;
         $this->isIosDevice = !!$isIosDevice;
     }
 
@@ -56,7 +56,7 @@ class NotifiableGroup
 
     public function getAppPackage()
     {
-        return $this->appPackage;
+        return $this->app_package;
     }
 
     public function isIosDevice()
@@ -64,13 +64,19 @@ class NotifiableGroup
         return $this->isIosDevice;
     }
 
-    public function routeNotificationForXiaoMiPush()
+    public function routeNotificationForXiaomiPush()
     {
-        $this->sendTos = $this->items->reduce(function($lst,$notifiable)
+        $this->sendTos = $this->getSendTos('xiaomiPush');
+        return $this->sendTos;
+    }
+
+    protected function getSendTos($router)
+    {
+        return $this->items->reduce(function($lst,$notifiable) use($router)
         {
             if(is_object($notifiable) && method_exists($notifiable,'routeNotificationFor'))
             {
-                $sto = $notifiable->routeNotificationFor('xiaomiPush');
+                $sto = $notifiable->routeNotificationFor($router);
                 if($sto)
                 {
                     $lst[] = $sto;
@@ -78,7 +84,6 @@ class NotifiableGroup
             }
             return $lst;
         },[]);
-        return $this->sendTos;
     }
 
 }

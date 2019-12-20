@@ -64,8 +64,9 @@ class User extends Model
     /**
      * 小米推送路由
      */
-    public function routeNotificationForXiaoMiPush()
+    public function routeNotificationForXiaomiPush()
     {
+        // return $this->xiaomi_push_regid;
         return $this->getKey();
     }
     
@@ -100,19 +101,17 @@ $msg = (new XiaomiNotification)
     ->payload([
          'action' => 'openApp',
     ])
-    ->sendBy('account')
-    ->setHandler(function($msg,$notifiable,$cfg,$ios)
+    ->setHandler(function($msg,$notifiable,$cfg,$type = null)
     {
         /**
          * @link https://github.com/al-one/xmpush-php/blob/master/sdk/xmpush/Builder.php
          * @link https://github.com/al-one/xmpush-php/blob/master/sdk/xmpush/IOSBuilder.php
          */
-        if($ios)
+        if($msg instanceof \xmpush\IOSBuilder)
         {
             $msg->badge(1);
-            $msg->soundUrl('ring.mp3');
         }
-        else
+        elseif($msg instanceof \xmpush\Builder)
         {
             $msg->notifyId(rand(0,4));
         }
