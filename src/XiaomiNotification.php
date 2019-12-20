@@ -94,7 +94,7 @@ class XiaomiNotification extends Notification implements ShouldQueue
     {
         $cls = [];
         $this->notifiable = $notifiable;
-        if($notifiable instanceof Notifiable)
+        if(is_object($notifiable) && method_exists($notifiable,'routeNotificationFor'))
         {
             if($notifiable->routeNotificationFor('xiaomiPush'))
             {
