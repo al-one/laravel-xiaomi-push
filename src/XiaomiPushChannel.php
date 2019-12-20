@@ -56,11 +56,11 @@ class XiaomiPushChannel
             {
                 xmpush\Constants::useSandbox();
             }
-            $msg = new xmpush\IOSBuilder();
+            $msg = new xmpush\IOSBuilder;
         }
         else
         {
-            $msg = new xmpush\Builder();
+            $msg = new xmpush\Builder;
         }
         /** @var Notification|XiaomiNotification $notification */
         $msg = $notification->toXiaomiPush($notifiable,$msg,$cfg);

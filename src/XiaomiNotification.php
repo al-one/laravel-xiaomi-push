@@ -2,7 +2,6 @@
 
 namespace Alone\LaravelXiaomiPush;
 
-use Illuminate\Support;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Notifications\Notification;
@@ -16,10 +15,8 @@ class XiaomiNotification extends Notification implements ShouldQueue
 
     protected $message = [];
 
-    protected $channels = ['xiaomi_push'];
-
     /**
-     * @var Notifiable
+     * @var Notifiable|mixed
      */
     protected $notifiable;
 
@@ -95,33 +92,16 @@ class XiaomiNotification extends Notification implements ShouldQueue
      */
     public function via($notifiable)
     {
+        $cls = [];
         $this->notifiable = $notifiable;
-        if(is_object($notifiable))
+        if($notifiable instanceof Notifiable)
         {
             if($notifiable->routeNotificationFor('xiaomiPush'))
             {
-                $this->channels('xiaomi_push');
+                $cls[] = 'xiaomi_push';
             }
         }
-        return $this->channels();
-    }
-
-    public function channels($set = null)
-    {
-        if(isset($set))
-        {
-            if(is_array($set))
-            {
-                $this->channels = $set;
-            }
-            else
-            {
-                $this->channels[] = $set;
-            }
-            $this->channels = array_unique($this->channels);
-            return $this;
-        }
-        return $this->channels;
+        return $cls;
     }
 
     /**
