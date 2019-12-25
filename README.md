@@ -115,6 +115,7 @@ $msg = (new XiaomiNotification)
         {
             $msg->notifyId(rand(0,4));
         }
+        return $msg;
     });
 
 $user->notify($msg);
